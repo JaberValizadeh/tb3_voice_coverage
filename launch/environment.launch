@@ -1,0 +1,8 @@
+<launch>
+  <!-- STAGE 1: the same house as tb3_house_full_coverage (world, map and room
+       shapes all come from that package - this one only adds the voice layer). -->
+  <arg name="gui" default="true"/>
+  <include file="$(find tb3_house_full_coverage)/launch/environment.launch">
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+</launch>

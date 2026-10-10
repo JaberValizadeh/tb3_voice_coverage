@@ -1,0 +1,12 @@
+<launch>
+  <!-- STAGE 2: map + AMCL, reused unchanged from tb3_house_full_coverage.
+       Needs the navigation stack: source ~/nav_underlay/setup_nav.bash
+
+       RViz is NOT started here - voice_coverage.launch starts it with this
+       package's own config, which shows the request being swept rather than
+       just the map. Pass rviz:=true to get the plain house view as well. -->
+  <arg name="rviz" default="false"/>
+  <include file="$(find tb3_house_full_coverage)/launch/localization.launch">
+    <arg name="rviz" value="$(arg rviz)"/>
+  </include>
+</launch>

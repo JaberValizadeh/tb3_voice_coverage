@@ -1,0 +1,100 @@
+<launch>
+  <!-- STAGE 3: listen for room requests, sweep the rooms asked for, and show
+       the whole thing filling in live in RViz.
+
+       Two understanding modes:
+
+         llm:=false (default)  fixed 26-word grammar + keyword parser.
+                               Offline and free, but you must say roughly
+                               "clean the kitchen".
+
+         llm:=true             free-form dictation + an LLM that maps whatever
+                               you said onto validated room keys, in any
+                               language, and asks when it is unsure.
+                               Costs one API call per utterance.
+
+       voice:=false skips the microphone in either mode - commands are plain
+       std_msgs/String, so you can type them:
+         rostopic pub -1 /voice_commands std_msgs/String "data: 'clean the kitchen'"
+         rostopic pub -1 /voice_text     std_msgs/String "data: 'tidy where I sleep'"
+  -->
+
+  <arg name="voice" default="true"/>
+  <arg name="llm" default="false"/>
+  <arg name="device" default="default"/>            <!-- ALSA capture device -->
+  <arg name="gain" default="2.0"/>                  <!-- mic amplification -->
+  <arg name="model_path"
+       default="$(find tb3_voice_control)/models/vosk-model-small-en-us-0.15"/>
+  <!-- Model credentials, shared with tb3_llm_control -->
+  <arg name="llm_config"
+       default="$(find tb3_llm_control)/OAI_CONFIG_LIST.json"/>
+  <arg name="llm_model" default="gpt-4o"/>
+
+  <!-- RViz lives here rather than in localization.launch, so the live view
+       comes up together with the thing it is showing and does not depend on
+       the navigation stack being installed. -->
+  <arg name="rviz" default="true"/>
+  <!-- Only needed when running WITHOUT localization.launch: AMCL normally
+       publishes map->odom, and RViz draws nothing at all without it. The
+       offset is the spawn pose from environment.launch, which is where odom
+       starts. Leave it false whenever AMCL is running - two publishers of the
+       same transform fight each other. -->
+  <arg name="static_map_tf" default="false"/>
+
+  <!-- Least driving for the coverage asked for. Both default on; turn them
+       off to see the difference:
+         optimize_order:=false  always visit rooms in fixed house order
+         skip_covered:=false    re-sweep floor that is already clean -->
+  <arg name="optimize_order" default="true"/>
+  <arg name="skip_covered" default="true"/>
+
+  <!-- ── Speech ─────────────────────────────────────────────────────────── -->
+  <!-- Keyword mode: closed vocabulary straight onto /voice_commands. -->
+  <group if="$(arg voice)">
+    <node unless="$(arg llm)" pkg="tb3_voice_control" type="voice_recognizer.py"
+          name="voice_recognizer" output="screen">
+      <param name="device" value="$(arg device)"/>
+      <param name="model_path" value="$(arg model_path)"/>
+      <param name="use_grammar" value="true"/>
+      <param name="gain" value="$(arg gain)"/>
+      <param name="grammar" value="clean,cover,vacuum,sweep,the,and,kitchen,living,store,room,rooms,bathroom,bedroom,study,corridor,hallway,everything,whole,house,all,every,stop,cancel,pause,resume,status"/>
+    </node>
+
+    <!-- LLM mode: free-form dictation onto /voice_text, so the raw words reach
+         the model instead of being forced through a fixed vocabulary. -->
+    <node if="$(arg llm)" pkg="tb3_voice_control" type="voice_recognizer.py"
+          name="voice_recognizer" output="screen">
+      <param name="device" value="$(arg device)"/>
+      <param name="model_path" value="$(arg model_path)"/>
+      <param name="use_grammar" value="false"/>
+      <param name="gain" value="$(arg gain)"/>
+      <remap from="voice_commands" to="/voice_text"/>
+    </node>
+  </group>
+
+  <!-- ── Understanding ──────────────────────────────────────────────────── -->
+  <node if="$(arg llm)" pkg="tb3_voice_coverage" type="llm_parser_node"
+        name="llm_parser" output="screen">
+    <param name="config_file" value="$(arg llm_config)"/>
+    <param name="model" value="$(arg llm_model)"/>
+    <param name="input_topic" value="/voice_text"/>
+  </node>
+
+  <!-- ── Coverage accounting + the robot ────────────────────────────────── -->
+  <node pkg="tb3_house_full_coverage" type="coordinator_node"
+        name="house_full_coordinator" output="screen"/>
+
+  <node pkg="tb3_voice_coverage" type="voice_coverage_node"
+        name="voice_coverage" output="screen">
+    <param name="optimize_order" value="$(arg optimize_order)"/>
+    <param name="skip_covered" value="$(arg skip_covered)"/>
+  </node>
+
+  <!-- ── Live view ──────────────────────────────────────────────────────── -->
+  <node if="$(arg static_map_tf)" pkg="tf2_ros"
+        type="static_transform_publisher" name="map_to_odom"
+        args="-3.0 0 0 0 0 0 map odom"/>
+
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz"
+        args="-d $(find tb3_voice_coverage)/rviz/voice_coverage.rviz"/>
+</launch>

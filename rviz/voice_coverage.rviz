@@ -1,0 +1,112 @@
+# Live view of a voice request being swept.
+#
+# The progress layer is /coverage_display, not /coverage_grid: the raw grid
+# marks floor still to do as 0, which RViz's costmap palette draws fully
+# transparent, so there is nothing to watch the covered area grow against.
+# voice_coverage_node recolours it against that palette:
+#
+#   -1  wall, solid block or outside the house   grey-green
+#    0  floor nobody asked for                   transparent (map shows through)
+#    1  asked for, still to do                   blue      <- shrinks
+#   99  swept                                    cyan      <- grows
+#
+# Nothing here needs the navigation stack. Without localization.launch there
+# is no /map, /scan or /particlecloud, but the house outline, the coverage and
+# the room percentages still come up, because they are derived from
+# house_layout rather than from a map server.
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+    Splitter Ratio: 0.5
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz/Grid
+      Enabled: false
+      Cell Size: 1
+      Color: 160; 160; 164
+      Name: Grid
+      Plane: XY
+      Reference Frame: map
+      Value: false
+    - Class: rviz/Map
+      Enabled: true
+      Name: House map
+      Topic: /map
+      Alpha: 1
+      Color Scheme: map
+      Draw Behind: true
+      Value: true
+    - Class: rviz/Map
+      Enabled: true
+      Name: Coverage progress
+      Topic: /coverage_display
+      Alpha: 0.7
+      Color Scheme: costmap
+      Draw Behind: false
+      Value: true
+    - Class: rviz/Path
+      Enabled: true
+      Name: Remaining plan
+      Topic: /coverage_path
+      Color: 255; 170; 0
+      Alpha: 1
+      Line Style: Lines
+      Buffer Length: 1
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Name: Coverage labels
+      Marker Topic: /coverage_markers
+      Queue Size: 100
+      Value: true
+    - Class: rviz/LaserScan
+      Enabled: true
+      Name: Scan
+      Topic: /scan
+      Color: 255; 60; 60
+      Color Transformer: FlatColor
+      Size (m): 0.03
+      Style: Points
+      Value: true
+    - Class: rviz/PoseArray
+      Enabled: false
+      Name: AMCL particles
+      Topic: /particlecloud
+      Color: 90; 200; 255
+      Arrow Length: 0.1
+      Value: false
+    - Class: rviz/TF
+      Enabled: false
+      Name: TF
+      Marker Scale: 0.4
+      Show Names: true
+      Value: false
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz/TopDownOrtho
+      Name: Current View
+      Target Frame: map
+      X: 0
+      Y: 0
+      Scale: 95
+      Angle: 0
+    Saved: ~
+Window Geometry:
+  Height: 900
+  Width: 1400
+  Displays:
+    collapsed: false

@@ -1,0 +1,3 @@
+#!/usr/bin/env python3
+from tb3_voice_coverage.voice_coverage_node import main
+main()

@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>tb3_voice_coverage</name>
+  <version>0.1.0</version>
+  <description>
+    Ask a TurtleBot3 to clean specific rooms by voice: "clean the kitchen and
+    the bathroom". Combines the offline Vosk speech recognition from
+    tb3_voice_control with the room-by-room sweep planner from
+    tb3_house_full_coverage, so only the requested rooms are covered.
+  </description>
+
+  <maintainer email="valizadeh.au@gmail.com">Jaber Valizadeh</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>gazebo_msgs</depend>
+  <!-- live RViz view: /coverage_path and /coverage_display, /coverage_markers -->
+  <depend>nav_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <exec_depend>rviz</exec_depend>
+  <!-- map->odom when running without the navigation stack (static_map_tf:=true) -->
+  <exec_depend>tf2_ros</exec_depend>
+
+  <!-- room shapes, sweep planner, map/world and the coverage coordinator -->
+  <exec_depend>tb3_house_full_coverage</exec_depend>
+  <!-- Vosk speech recognizer publishing /voice_commands -->
+  <exec_depend>tb3_voice_control</exec_depend>
+  <!-- optional LLM understanding: shares tb3_llm_control's OAI_CONFIG_LIST -->
+  <exec_depend>tb3_llm_control</exec_depend>
+  <exec_depend>python3-openai-pip</exec_depend>
+
+  <export>
+  </export>
+</package>
